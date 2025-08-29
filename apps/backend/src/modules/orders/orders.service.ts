@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Order, Product, StatusOrder } from '@prisma/client';
+import dayjs from 'dayjs';
 import { PrismaService } from 'nestjs-prisma';
 import { BaseResponse } from 'src/commons/dto/base-response.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { ApiOrder, UiOrder, UiOrderItem } from './orders.model';
 
 @Injectable()
 export class OrdersService {
@@ -193,6 +195,29 @@ export class OrdersService {
       totalPending,
       totalPaid,
       totalCancelled,
+    };
+  }
+
+  transformOrderApiToUi(order: ApiOrder): UiOrder {
+    const baseDate = order.createdAt ?? order.updatedAt;
+    const orderDay = baseDate ? dayjs(baseDate).toDate().toLocaleDateString() : '';
+
+    const orderItems: UiOrderItem[] = (order.orderItems || []).map((i) => ({
+      productName: i.productName ?? i.product?.name ?? '',
+      quantity: i.quantity ?? 0,
+      price: i.price ?? 0,
+      totalPrice: i.totalPrice ?? 0,
+      sku: i.product?.sku,
+      description: i.product?.description,
+      category: i.product?.category,
+    }));
+
+    return {
+      orderNumber: order.orderNumber,
+      status: order.status,
+      totalPrice: order.totalPrice,
+      orderDay,
+      orderItems,
     };
   }
 }

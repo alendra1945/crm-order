@@ -1,1 +1,0 @@
-import{c as n,ab as o,o as t,z as e}from"./reporting-template-design-web-B1Q-OiBd.js";function r(r){const s=function(){const[e,r]=n(!1);return o()&&t((()=>{r(!0)})),e}();return e((()=>(s(),Boolean(r()))))}export{r as u};

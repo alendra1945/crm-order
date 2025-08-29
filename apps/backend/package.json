@@ -14,7 +14,7 @@
     "start:prod": "node dist/main",
     "lint": "eslint src/**/*.ts",
     "db:seed": "prisma db seed",
-    "postinstall": "npx run prisma generate && npx playwright install chromium"
+    "postinstall": "npx prisma generate && npx playwright install chromium"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

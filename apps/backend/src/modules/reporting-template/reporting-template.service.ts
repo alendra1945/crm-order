@@ -3,6 +3,8 @@ import { ReportTemplate } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
 import { defaultMetadata, defaultSource } from 'src/commons/constants/report';
 import { BaseResponse } from 'src/commons/dto/base-response.dto';
+import { DUMMY_INVOICE } from 'src/commons/dummy/invoice..dummy';
+import { DUMMY_OVERVIEW } from 'src/commons/dummy/overview.dummy';
 import { CreateReportingTemplateDto } from './dto/create-reporting-template.dto';
 import { UpdateReportingTemplateDto } from './dto/update-reporting-template.dto';
 
@@ -54,6 +56,16 @@ export class ReportingTemplateService {
     if (!template) {
       throw new NotFoundException('Template not found');
     }
-    return template.metadata;
+    if (template.documentTarget === 'dashboard') {
+      return {
+        ...DUMMY_OVERVIEW,
+      };
+    }
+    if (template.documentTarget === 'invoice') {
+      return {
+        ...DUMMY_INVOICE,
+      };
+    }
+    return {};
   }
 }

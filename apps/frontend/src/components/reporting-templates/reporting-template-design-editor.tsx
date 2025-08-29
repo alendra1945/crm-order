@@ -1,6 +1,10 @@
 'use client';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useDetailReportTemplateQuery, useUpdateReportTemplateMutation } from '@/hooks/use-report-template-query';
+import {
+  useDetailReportTemplateQuery,
+  useGetReportTemplateDataQuery,
+  useUpdateReportTemplateMutation,
+} from '@/hooks/use-report-template-query';
 import { cn } from '@/lib/utils';
 import { ArrowLeftIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,6 +23,7 @@ export const ReportingTemplateDesignEditorSection = ({
 }: ReportingTemplateDesignEditorProps) => {
   const { data: reportTemplateDetail } = useDetailReportTemplateQuery(params.id);
   const { mutateAsync: updateReportTemplate } = useUpdateReportTemplateMutation();
+  const { data: reportTemplateData } = useGetReportTemplateDataQuery(params.id);
   const router = useRouter();
   const refElement = useRef<{
     source: Record<string, any>;
@@ -86,7 +91,7 @@ export const ReportingTemplateDesignEditorSection = ({
       {reportTemplateDetail?.id === params.id && (
         <ReportTemplateDesign
           globalData={{}}
-          pageData={{}}
+          pageData={reportTemplateData}
           onUpdate={(data) => {
             refElement.current.source = data.elementsData;
             refElement.current.pageSettings = data.pageSettings;

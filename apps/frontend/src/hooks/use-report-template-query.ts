@@ -129,3 +129,20 @@ export const useUpdateReportTemplateMutation = () => {
     },
   });
 };
+
+export const useGetReportTemplateDataQuery = (id?: string) => {
+  return useQuery({
+    queryKey: ['get-report-template-data', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await fetchClientQuery<Record<string, any>>({
+        url: `/reporting-template/${id}/template-data`,
+        method: 'GET',
+      });
+      if (error || !data) {
+        throw new Error(error || 'Something went wrong');
+      }
+      return data;
+    },
+  });
+};
