@@ -2,9 +2,10 @@
 
 {% macro text(element,data) -%}
     {% set attribs = update_attributes(element.dataKey, data, element.attributes or {}) %}
+    {% set styles = update_style_visibility(attribs,element.styles, data) %}
     {% set innerHTML_template= element.innerHTML | safe  %}
     {% set rendered_innerHTML = element.innerHTML | render_template(data) %}
-    <span class="stzee-editorks {{element.classes or ''}}" style="{{convert_css(element.styles)}}" {{field_attributes(attribs)}}>
+    <span class="stzee-editorks {{element.classes or ''}}" style="{{convert_css(styles)}}" {{field_attributes(attribs)}}>
         {{rendered_innerHTML | safe}}
     </span>
 {%- endmacro %}

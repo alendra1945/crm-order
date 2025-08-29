@@ -2,7 +2,8 @@
 
 {% macro image(element,data) -%}
     {% set attribs = update_attributes(element.dataKey, data, element.attributes or {}) %}
-    <{{element.originalElement}} class="{{element.classes or ''}}" style="{{convert_css(element.styles)}}" {{field_attributes(attribs)}}>
+    {% set styles = update_style_visibility(attribs,element.styles, data) %}
+    <{{element.originalElement}} class="{{element.classes or ''}}" style="{{convert_css(styles)}}" {{field_attributes(attribs)}}>
        
     </{{element.originalElement}}>
 {%- endmacro %}

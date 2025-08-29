@@ -4,7 +4,6 @@ import { PrismaService } from 'nestjs-prisma';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Environment, FileSystemLoader, Template } from 'nunjucks';
-import pLimit, { LimitFunction } from 'p-limit';
 import { defaultMetadata, defaultSource } from 'src/commons/constants/report';
 import { BaseResponse } from 'src/commons/dto/base-response.dto';
 import { DUMMY_INVOICE } from 'src/commons/dummy/invoice..dummy';
@@ -30,6 +29,7 @@ function toItems(attributeRecord: Record<string, any>) {
   }
   return arrayAttr;
 }
+
 function mergeRecord(obj1: Record<string, any>, obj2: Record<string, any>) {
   return {
     ...(obj1 || {}),
@@ -63,7 +63,27 @@ function getElementData(data_key: Record<string, any>, data: Record<string, any>
   }
   return element_data;
 }
+function updateStyleVisibility(attributes, prevStyle, data) {
+  const activeStyle = { ...(prevStyle || {}) };
+  const visibility = attributes['data-visibility-key'];
 
+  if (visibility) {
+    const condition = attributes['data-visibility-condition'] || 'exist';
+    const conditionValue = attributes['data-visibility-condition-value'] || '';
+
+    const value = String(getDataForKey(data, visibility) || '').toLowerCase();
+
+    if (
+      (condition === 'exist' && !getDataForKey(data, visibility)) ||
+      (condition === 'not_exist' && getDataForKey(data, visibility)) ||
+      (condition === 'equal' && value !== conditionValue.toLowerCase())
+    ) {
+      activeStyle.display = 'none';
+    }
+  }
+
+  return activeStyle;
+}
 @Injectable()
 export class ReportingTemplateService {
   constructor(
@@ -140,10 +160,6 @@ export class ReportingTemplateService {
     });
   }
   async print(template: ReportTemplate, pageData: Record<string, any>) {
-    let limit: LimitFunction | null = null;
-    if (!limit) {
-      limit = pLimit(5);
-    }
     const env = new Environment(new FileSystemLoader(templates), {
       autoescape: true,
     });
@@ -154,6 +170,7 @@ export class ReportingTemplateService {
     env.addGlobal('update_attributes', updateAttributes);
     env.addGlobal('get_element_data', getElementData);
     env.addFilter('render_template', this.renderTemplate);
+    env.addGlobal('update_style_visibility', updateStyleVisibility);
     const printformat = env.getTemplate('print_format.html');
     const css = await fs.promises.readFile(templates + '/reporting-template-style.css', 'utf8');
 

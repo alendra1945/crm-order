@@ -3,7 +3,8 @@
 
 {% macro render(element, global_data, page_data) -%}
 {% set attribs = update_attributes(element.dataKey, data, element.attributes or {}) %}
-<div class="{{element.classes or ''}}" style="{{convert_css(element.styles)}}" {{field_attributes(attribs)}}>
+{% set styles = update_style_visibility(attribs,element.styles, merge_dict(global_data,page_data)) %}
+<div class="{{element.classes or ''}}" style="{{convert_css(styles)}}" {{field_attributes(attribs)}}>
     {% if element.content is iterable and (element.content is not string and element.content is not mapping) %}
     {% for object in element.content %}
     {{render_element(object,global_data,page_data)}}
