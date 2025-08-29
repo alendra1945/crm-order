@@ -12,7 +12,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/frontend/package.json apps/frontend/
 
 # Install deps
-RUN pnpm install
+RUN pnpm install  --frozen-lockfile
 
 # Copy frontend source
 COPY apps/frontend ./apps/frontend
@@ -25,8 +25,10 @@ RUN pnpm build
 FROM base AS runner
 WORKDIR /app/apps/frontend
 
-# Install only production deps
-COPY package.json ../../
+# Copy only frontend package.json (not root)
+COPY apps/frontend/package.json ./
+
+# Install only production deps for frontend
 RUN pnpm install --prod
 
 # Copy built Next.js app
