@@ -1,0 +1,5 @@
+{% macro field_attributes(df) %}
+{% for key, value in to_items(df) %}
+{{key}}="{{ value }}"
+{% endfor %}
+{% endmacro %}

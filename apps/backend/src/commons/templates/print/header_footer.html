@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset="utf-8">
+    {% if is_footer %}
+        <style>
+            {{ display_css | safe }}
+        </style>
+        <style>
+            img,table, thead, tbody,tr, td,th,tfoot{
+                opacity:0;
+            }
+            div{
+                background: transparent;
+                border-color: transparent;
+            }
+            span :not(:has(.visible-on-header)){
+                color: transparent;
+                background: transparent;
+                color: transparent;
+                border-color: transparent;
+            }
+            
+            span.visible-on-header{
+                color: inherit !important;
+            }
+            
+        </style>
+    {% endif %}
+</head>
+<body>
+    {{ display_element | safe}}
+</body>
+
+</html>

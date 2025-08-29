@@ -1,0 +1,9 @@
+
+{% macro repeater(element, render_element, global_data, page_data) -%}
+    {% set element_data = get_element_data(element.dataKey, page_data) %}
+    {% if element_data %}
+        {% for data in element_data %}
+            {{ render_element(element, global_data, data, true) }}
+        {% endfor %}
+    {% endif %}
+{%- endmacro %}

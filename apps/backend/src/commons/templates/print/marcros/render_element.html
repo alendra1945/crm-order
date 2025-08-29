@@ -1,0 +1,18 @@
+{% from 'marcros/container.html' import container with context %}
+{% from 'marcros/text.html' import text with context %}
+{% from 'marcros/image.html' import image with context %}
+{% from 'marcros/table.html' import table with context %}
+{% from 'marcros/repeater.html' import repeater with context %}
+{% macro render_element(element, global_data, page_data, is_repeat_child = False) -%}
+    {% if element.isRepeaterElement and not is_repeat_child %}
+        {{repeater(element, render_element, global_data, page_data)}}
+    {% elif element.type == "container" %}
+        {{container(element, render_element, global_data, page_data)}}
+    {% elif element.type == "text" %}
+        {{text(element,merge_dict(global_data,page_data))}}
+    {% elif element.type == "image" %}
+        {{image(element,merge_dict(global_data,page_data))}}
+    {% elif element.type == "table" %}
+        {{table(element,render_element, global_data, page_data)}}
+    {% endif %}
+{%- endmacro %}

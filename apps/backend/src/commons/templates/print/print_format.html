@@ -1,0 +1,104 @@
+{% from 'marcros/render.html' import render with context %}
+{% from 'marcros/render_google_fonts.html' import render_google_fonts with context %}
+
+<div class="header-report"
+    style="position:fixed;left:0;right:0;top:0;height:{{settings.headerHeight}}px;overflow: hidden;z-index: 1;">
+    {%- for header in [pdf_format_elements.headers] -%}
+    {{ render(header, global_data, page_data) }}
+    {%- endfor -%}
+</div>
+[stzee_separate_document_pdf]
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset="utf-8">
+{{ render_google_fonts(settings.fonts) }}
+
+<style>
+    {{ display_css | safe }}
+</style>
+<style>
+    *{
+        box-sizing: border-box;
+    }
+    body {
+        font-size: 13px;
+    }
+    table.wrapper:has(.td-body-report > div > div[data-page-break="1"]) {
+        page-break-after: always;
+    }
+    table.wrapper:last-of-type {
+        page-break-after: auto !important;
+        page-break-before: avoid;
+    }
+    .print-format{
+        width: 100%;
+    }
+    span :has(.visible-on-header){
+      opacity:0
+    }
+    table.wrapper, caption.wrapper, tbody.wrapper, tfoot.wrapper, thead.wrapper, tr.wrapper, th.wrapper, td.wrapper
+    { margin: 0; padding: 0 !important; border: 0; font: inherit; vertical-align: baseline; } 
+    table.wrapper { border-collapse: collapse; border-spacing: 0;width: 100%; }
+    tr:not(.wrapper){
+        page-break-inside: avoid !important;
+    }
+</style>
+</head>
+<body><div class='print-format'>
+{%- for body in pdf_format_elements.elements -%}
+{% set zindex = 4 %}
+{% if body.attributes['data-page-watermark'] != '1'%}
+    {% set zindex = 6%}
+{% endif %}
+<table class='wrapper' style="height:{{settings.height}}px;overflow: visible;">
+    {% if body.attributes['data-page-header'] == '1' and settings.headerHeight%}
+    <thead class='wrapper header-report'>
+        <tr class='wrapper'>
+            <th class='wrapper'>
+                <div style="height:{{settings.headerHeight}}px">
+                </div>
+            </th>
+        </tr>
+    </thead>
+    {% endif %}
+    <tbody class='wrapper body-report' style="height:calc(100% - {{settings.headerHeight}}px - {{settings.footerHeight}}px);">
+        <tr class='wrapper' style="height:100%;">
+            <td class='wrapper td-body-report' style="height:100%;">
+                <div style="background:white; position: relative; z-index: {{zindex}};">
+                    {{ render(body, global_data, page_data) }}
+                    {% if body['merge_element']%}
+                        {% for m_element in body['merge_element']%}
+                        {{ render(m_element, global_data, page_data) }}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </td>
+        </tr class='wrapper'>
+    </tbody>
+    {% if body.attributes['data-page-footer'] == '1' and settings.footerHeight%}
+    <tfoot class='wrapper footer-report'>
+        <tr class='wrapper'>
+            <th class='wrapper'>
+                <div style="height:{{settings.footerHeight}}px;">
+                </div>
+            </th>
+        </tr>
+    </tfoot>
+    {% endif %}
+
+</table>
+{%- endfor -%}
+[stzee_separate_document_pdf]
+{%- for watermark in [pdf_format_elements.watermark] -%}
+<div class="watermark-report" style="position:fixed;height:{{settings.height}}px;left:0;right:0;top:0;bottom:0;z-index: 5;">
+   {{ render(watermark, global_data, page_data) }}
+</div>
+{%- endfor -%}
+[stzee_separate_document_pdf]
+<div class="footer-report"
+    style="position:fixed;left:0;right:0;bottom:-1px;height:{{settings.footerHeight+1}}px;overflow: hidden;z-index: 1;">
+    {%- for footer in [pdf_format_elements.footers] -%}
+    {{ render(footer, global_data, page_data) }}
+    {%- endfor -%}
+</div>

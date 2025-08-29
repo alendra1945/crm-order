@@ -1,0 +1,14 @@
+{% from 'marcros/field_attributes.html' import field_attributes with context %}
+{% from 'marcros/render_element.html' import render_element with context %}
+
+{% macro render(element, global_data, page_data) -%}
+{% set attribs = update_attributes(element.dataKey, data, element.attributes or {}) %}
+<div class="{{element.classes or ''}}" style="{{convert_css(element.styles)}}" {{field_attributes(attribs)}}>
+    {% if element.content is iterable and (element.content is not string and element.content is not mapping) %}
+    {% for object in element.content %}
+    {{render_element(object,global_data,page_data)}}
+    {% endfor %}
+    {% endif %}
+</div>
+
+{%- endmacro %}

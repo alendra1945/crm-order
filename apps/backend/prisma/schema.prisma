@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  SUBACCOUNT_ADMIN
+  SUBACCOUNT_USER
+  SUBACCOUNT_GUEST
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TicketAcountType {
+  OWNER
+  REVIEWER
+}
+
+model Account {
+  id        String   @id @default(uuid())
+  avatarUrl String   @db.Text
+  email     String   @unique
+  password  String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      Role     @default(SUBACCOUNT_USER)
+  isActive  Boolean  @default(false)
+}
+
+enum LeaveType {
+  CASUAL
+  COMPENSATORY
+  LEAVE_WITHOUT_PAY
+  PRIVILEGE
+  SICK
+}
+
+enum LeaveStatus {
+  OPEN
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  sku         String      @default("")
+  name        String      @default("")
+  description String      @default("")
+  price       Float       @default(0)
+  category    String      @default("")
+  quantity    Int         @default(0)
+  imageUrl    String      @default("")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  OrderItem   OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int      @default(0)
+  price      Float    @default(0)
+  totalPrice Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Order      Order?   @relation(fields: [orderId], references: [id])
+  orderId    String?
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  orderItems OrderItem[]
+  totalPrice Float       @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model ReportTemplate {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  source         Json?
+  metadata       Json?
+  documentTarget String
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

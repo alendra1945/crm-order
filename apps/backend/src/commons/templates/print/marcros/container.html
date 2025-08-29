@@ -1,0 +1,12 @@
+{% from 'marcros/field_attributes.html' import field_attributes with context %}
+
+{% macro container(element, render_element, global_data, page_data) -%}
+    {% set attribs = update_attributes(element.dataKey, data, element.attributes or {}) %}
+    <{{element.originalElement}} class="{{element.classes or ''}}" style="{{convert_css(element.styles)}}" {{field_attributes(attribs)}}>
+        {% if element.content %}
+            {% for object in element.content %}
+               {{ render_element(object, global_data, page_data) }}
+            {% endfor %}
+        {% endif %}
+    </{{element.originalElement}}>
+{%- endmacro %}
