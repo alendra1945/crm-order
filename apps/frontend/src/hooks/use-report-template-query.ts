@@ -146,3 +146,31 @@ export const useGetReportTemplateDataQuery = (id?: string) => {
     },
   });
 };
+
+export const usePrintReportTemplateMutation = (documentTarget: string) => {
+  return useMutation({
+    mutationFn: async (documentTargetData: Record<string, any>) => {
+      const { data, error } = await fetchClientQuery<Record<string, any>>({
+        url: `/reporting-template/print`,
+        method: 'POST',
+        body: { documentTarget, data: documentTargetData },
+      });
+      if (error || !data) {
+        throw new Error(error || 'Something went wrong');
+      }
+      if (data.data) {
+        const res = await fetch(`data:application/pdf;base64,${data.data}`);
+        const blob = await res.blob();
+        const fileUrl = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = `${documentTarget}.${documentTargetData.name || {}}.pdf`;
+        link.click();
+
+        URL.revokeObjectURL(fileUrl);
+      }
+      return data;
+    },
+  });
+};

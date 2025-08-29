@@ -6,9 +6,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AccountModule } from './modules/account/account.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { OrdersModule } from './modules/orders/orders.module';
 import { ProductModule } from './modules/product/product.module';
 import { ReportingTemplateModule } from './modules/reporting-template/reporting-template.module';
-import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [

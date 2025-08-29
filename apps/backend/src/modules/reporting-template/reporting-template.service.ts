@@ -1,16 +1,76 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReportTemplate } from '@prisma/client';
 import { PrismaService } from 'nestjs-prisma';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { Environment, FileSystemLoader, Template } from 'nunjucks';
+import pLimit, { LimitFunction } from 'p-limit';
 import { defaultMetadata, defaultSource } from 'src/commons/constants/report';
 import { BaseResponse } from 'src/commons/dto/base-response.dto';
 import { DUMMY_INVOICE } from 'src/commons/dummy/invoice..dummy';
 import { DUMMY_OVERVIEW } from 'src/commons/dummy/overview.dummy';
+import { getBrowserInstance } from 'src/commons/templates/playwright';
+import { OrdersService } from '../orders/orders.service';
+import { ProductService } from '../product/product.service';
 import { CreateReportingTemplateDto } from './dto/create-reporting-template.dto';
 import { UpdateReportingTemplateDto } from './dto/update-reporting-template.dto';
+const templates = path.join(__dirname, `../../commons/templates/print`);
+function convertCss(stylesheet: Record<string, any>) {
+  return Array.from(Object.keys(stylesheet))
+    .map((rule) => `${rule}:${stylesheet[rule]}`)
+    .join(';');
+}
+
+function toItems(attributeRecord: Record<string, any>) {
+  const arrayAttr: [string, any][] = [];
+  if (Object.keys(attributeRecord || {}).length) {
+    Object.keys(attributeRecord).forEach((activeKey) => {
+      arrayAttr.push([activeKey, attributeRecord[activeKey]]);
+    });
+  }
+  return arrayAttr;
+}
+function mergeRecord(obj1: Record<string, any>, obj2: Record<string, any>) {
+  return {
+    ...(obj1 || {}),
+    ...(obj2 || {}),
+  };
+}
+
+function updateAttributes(
+  data_key: Record<string, any>,
+  data: Record<string, any>,
+  prev_attributes: Record<string, any>
+) {
+  const attr = prev_attributes || {};
+  if (data_key && data) {
+    if (data_key['type'] == 'attribute') {
+      attr[data_key['property']] = getDataForKey(data, data_key['key']) || attr[data_key['property']];
+    }
+  }
+
+  return attr;
+}
+function getDataForKey(datum: object, key: string) {
+  const data = Object.assign({}, datum);
+  return key.split('.').reduce((d: any, key) => (d ? d[key] : null), data) as any;
+}
+function getElementData(data_key: Record<string, any>, data: Record<string, any>) {
+  let element_data: any[] = [];
+  if (data_key && data) {
+    element_data = getDataForKey(data, data_key['key']) || element_data;
+    element_data = element_data.map((v, i) => ({ ...v, idx: i + 1 }));
+  }
+  return element_data;
+}
 
 @Injectable()
 export class ReportingTemplateService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly productService: ProductService,
+    private readonly orderService: OrdersService
+  ) {}
 
   async create(dto: CreateReportingTemplateDto): Promise<ReportTemplate> {
     return this.prisma.reportTemplate.create({
@@ -67,5 +127,108 @@ export class ReportingTemplateService {
       };
     }
     return {};
+  }
+
+  renderTemplate(templateStr: string, context: Record<string, any>) {
+    const regex =
+      /<span\s+data-source="([^"]+)"\s+label="([^"]+)"\s+color="([^"]+)"\s+data-type="variable-component-node">(.*?)<\/span>/;
+    const newtemplate = templateStr.replace(regex, '$4');
+
+    const template = new Template(newtemplate);
+    return template.render({
+      data: context,
+    });
+  }
+  async print(template: ReportTemplate, pageData: Record<string, any>) {
+    let limit: LimitFunction | null = null;
+    if (!limit) {
+      limit = pLimit(5);
+    }
+    const env = new Environment(new FileSystemLoader(templates), {
+      autoescape: true,
+    });
+    env.addGlobal('convert_css', convertCss);
+    env.addGlobal('to_items', toItems);
+    env.addGlobal('merge_dict', mergeRecord);
+    env.addGlobal('enumerate', (data: any[]) => data.map((v, i) => [i, v]));
+    env.addGlobal('update_attributes', updateAttributes);
+    env.addGlobal('get_element_data', getElementData);
+    env.addFilter('render_template', this.renderTemplate);
+    const printformat = env.getTemplate('print_format.html');
+    const css = await fs.promises.readFile(templates + '/reporting-template-style.css', 'utf8');
+
+    const settings = template.metadata['page_settings'] || {};
+    const renderPrintFormat = printformat.render({
+      pdf_format_elements: template.source || [],
+      settings: settings,
+      global_data: {},
+      page_data: pageData || {},
+      display_css: css,
+    });
+    const renderElementPrintFormat = renderPrintFormat.split('[stzee_separate_document_pdf]');
+    const headerElement = renderElementPrintFormat[0];
+    const bodyElement = renderElementPrintFormat[1];
+    const watermarkElement = renderElementPrintFormat[2];
+    const footerElement = renderElementPrintFormat[3];
+    const mergeRenderElement = `${bodyElement}${headerElement}${footerElement}${watermarkElement}</div></body></html>`;
+
+    const data = await (async () => {
+      const browser = await getBrowserInstance()!;
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.setContent(mergeRenderElement, {
+        waitUntil: 'networkidle',
+      });
+      await page.emulateMedia();
+      const res = await page.pdf({
+        width: `${settings['width']}px`,
+        height: `${settings['height']}px`,
+        displayHeaderFooter: false,
+        printBackground: true,
+        headerTemplate: '',
+        footerTemplate: '',
+        margin: {
+          top: `${settings['marginTop']}px`,
+          bottom: `${settings['marginBottom']}px`,
+          left: `${settings['marginLeft']}px`,
+          right: `${settings['marginRight']}px`,
+        },
+      });
+      await context.close();
+      await page.close();
+      return res;
+    })();
+    return {
+      data: data.toString('base64'),
+    };
+  }
+  async handlePrintDashboard(template: ReportTemplate) {
+    const productOverview = await this.productService.getProductOverview();
+    return this.print(template, productOverview);
+  }
+  async handlePrintInvoice(template: ReportTemplate, orderId: string) {
+    const order = await this.orderService.findOne(orderId);
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    return this.print(template, this.orderService.transformOrderApiToUi(order));
+  }
+
+  async printReport(documentTarget: string, data: Record<string, any>) {
+    const template = await this.prisma.reportTemplate.findFirst({
+      where: { documentTarget, isDefault: true },
+    });
+    if (!template) {
+      throw new NotFoundException('Default template not found');
+    }
+    if (documentTarget === 'dashboard') {
+      return await this.handlePrintDashboard(template);
+    }
+    if (documentTarget === 'invoice') {
+      if (!data.orderId) {
+        throw new NotFoundException('Order not found');
+      }
+      return await this.handlePrintInvoice(template, data.orderId);
+    }
   }
 }

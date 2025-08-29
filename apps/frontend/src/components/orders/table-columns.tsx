@@ -2,10 +2,12 @@
 import { Badge } from '@/components/ui/badge';
 import { useModal } from '@/hooks/use-modal-store';
 import { OrderSchemaFromApi, StatusOrderSchema } from '@/hooks/use-order-query';
+import { usePrintReportTemplateMutation } from '@/hooks/use-report-template-query';
 import { cn, formatCurrencyTOIDR } from '@/lib/utils';
 import { CellContext, ColumnDef } from '@tanstack/react-table';
 import { EllipsisVertical, PenIcon, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import z from 'zod';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -62,9 +64,28 @@ const MenuColumn = ({ row }: CellContextOrder) => {
 };
 
 const DownloadButton = ({ row }: CellContextOrder) => {
+  const { mutateAsync: printReportTemplate, isPending } = usePrintReportTemplateMutation('invoice');
+  const handlePrint = async () => {
+    try {
+      await printReportTemplate({
+        reportType: 'dashboard',
+        orderId: row.original.id,
+        name: row.original.orderNumber,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error('Something went wrong');
+    }
+  };
   return (
-    <Button variant='outline' size='sm' className='text-sm text-gray-600 hover:text-gray-700 font-normal'>
-      {row.original.status === 'PAID' ? 'Download Invoice' : 'Download Proforma'}
+    <Button
+      variant='outline'
+      size='sm'
+      className='text-sm text-gray-600 hover:text-gray-700 font-normal'
+      disabled={isPending}
+      onClick={handlePrint}
+    >
+      {isPending ? 'Generating...' : row.original.status === 'PAID' ? 'Download Invoice' : 'Download Proforma'}
     </Button>
   );
 };

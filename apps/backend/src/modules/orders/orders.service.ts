@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Order, Product, StatusOrder } from '@prisma/client';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { PrismaService } from 'nestjs-prisma';
 import { BaseResponse } from 'src/commons/dto/base-response.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -103,7 +103,7 @@ export class OrdersService {
     };
   }
 
-  async findOne(id: string): Promise<Order | null> {
+  async findOne(id: string): Promise<ApiOrder | null> {
     return await this.prisma.order.findUnique({
       where: { id },
       include: {
@@ -199,8 +199,10 @@ export class OrdersService {
   }
 
   transformOrderApiToUi(order: ApiOrder): UiOrder {
-    const baseDate = order.createdAt ?? order.updatedAt;
-    const orderDay = baseDate ? dayjs(baseDate).toDate().toLocaleDateString() : '';
+    const baseDate = order.updatedAt;
+    const orderDay = baseDate
+      ? dayjs(baseDate).format('DD MMM YYYY') // e.g. "29 Aug 2025"
+      : '';
 
     const orderItems: UiOrderItem[] = (order.orderItems || []).map((i) => ({
       productName: i.productName ?? i.product?.name ?? '',

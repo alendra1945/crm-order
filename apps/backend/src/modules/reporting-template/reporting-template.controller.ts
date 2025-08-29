@@ -44,4 +44,9 @@ export class ReportingTemplateController {
   async download(@Param('id') id: string) {
     return await this.reportingTemplateService.getTemplateData(id);
   }
+
+  @Post('print')
+  async print(@Body() body: { documentTarget: string; data: Record<string, any> }) {
+    return await this.reportingTemplateService.printReport(body.documentTarget, body.data);
+  }
 }
