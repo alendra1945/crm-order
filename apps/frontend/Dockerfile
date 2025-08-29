@@ -9,13 +9,11 @@ WORKDIR /app
 
 # Copy manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/frontend/package.json apps/frontend/
+# Copy frontend source
+COPY apps/frontend ./apps/frontend
 
 # Install deps
 RUN pnpm install
-
-# Copy frontend source
-COPY apps/frontend ./apps/frontend
 
 # Build frontend
 WORKDIR /app/apps/frontend

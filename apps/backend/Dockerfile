@@ -12,13 +12,11 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/backend/package.json apps/backend/
 
-# Copy Prisma schema first
-COPY apps/backend/prisma ./apps/backend/prisma
-
 # Install deps (include dev for Prisma CLI)
 RUN pnpm install
 
-
+# Copy Prisma schema first
+COPY apps/backend/prisma ./apps/backend/prisma
 
 
 # Copy entire backend source (tsconfig.json, src/, etc.)
