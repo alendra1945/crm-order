@@ -63,10 +63,12 @@ export class ProductService {
     const totalProduct = await this.prisma.product.count();
     const totalOutOfStock = await this.prisma.product.count({ where: { quantity: 0 } });
     const totalInStockProduct = await this.prisma.product.count({ where: { quantity: { gt: 0 } } });
+    const totalOrder = await this.prisma.order.count();
     return {
       totalProduct,
       totalInStockProduct,
       totalOutOfStock,
+      totalOrder,
     };
   }
 }

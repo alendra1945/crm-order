@@ -8,6 +8,7 @@ import { AccountModule } from './modules/account/account.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProductModule } from './modules/product/product.module';
 import { ReportingTemplateModule } from './modules/reporting-template/reporting-template.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReportingTemplateModule } from './modules/reporting-template/reporting-
     AccountModule,
     ReportingTemplateModule,
     ProductModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

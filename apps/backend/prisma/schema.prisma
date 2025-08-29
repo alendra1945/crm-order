@@ -72,24 +72,33 @@ model Product {
 }
 
 model OrderItem {
-  id         String   @id @default(uuid())
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  quantity   Int      @default(0)
-  price      Float    @default(0)
-  totalPrice Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  Order      Order?   @relation(fields: [orderId], references: [id])
-  orderId    String?
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String   @default("")
+  quantity    Int      @default(0)
+  price       Float    @default(0)
+  totalPrice  Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Order       Order?   @relation(fields: [orderId], references: [id])
+  orderId     String?
+}
+
+enum StatusOrder {
+  PENDING
+  PAID
+  CANCELLED
 }
 
 model Order {
-  id         String      @id @default(uuid())
-  orderItems OrderItem[]
-  totalPrice Float       @default(0)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id          String      @id @default(uuid())
+  orderNumber String      @default("")
+  orderItems  OrderItem[]
+  status      StatusOrder @default(PENDING)
+  totalPrice  Float       @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model ReportTemplate {
