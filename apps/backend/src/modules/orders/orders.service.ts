@@ -200,9 +200,7 @@ export class OrdersService {
 
   transformOrderApiToUi(order: ApiOrder): UiOrder {
     const baseDate = order.updatedAt;
-    const orderDay = baseDate
-      ? dayjs(baseDate).format('DD MMM YYYY') // e.g. "29 Aug 2025"
-      : '';
+    const orderDay = baseDate ? dayjs(baseDate).format('DD MMM YYYY') : '';
 
     const orderItems: UiOrderItem[] = (order.orderItems || []).map((i) => ({
       productName: i.productName ?? i.product?.name ?? '',
